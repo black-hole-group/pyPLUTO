@@ -13,11 +13,19 @@ from matplotlib.mlab import *
 from scipy.interpolate import UnivariateSpline
 import time
 
+
+
+
 def curdir():
 	""" Get the current working directory.
 	"""
         curdir = os.getcwd()+'/'
         return curdir
+
+
+
+
+
 
 def get_nstepstr(ns):
     """ Convert the float input *ns* into a string that would match the data file name.
@@ -26,6 +34,10 @@ def get_nstepstr(ns):
     while len(nstepstr) < 4:
         nstepstr= '0'+nstepstr
     return nstepstr
+
+
+
+
 
 def nlast_info(w_dir=None):
 	""" Prints the information of the last step of the simulation as obtained from dbl.out
@@ -205,6 +217,9 @@ class pload(object):
 	grid_dict={'n1':n1,'n2':n2,'n3':n3,'x1':x1,'x2':x2,'x3':x3,'dx1':dx1,'dx2':dx2,'dx3':dx3}
 
 	return grid_dict
+
+
+
 
 
     def data(self):
@@ -863,6 +878,11 @@ class Image(object):
 		return flines
 
 
+
+
+
+
+
 	def myfieldlines(self,Data,x0arr,y0arr,stream=False,**kwargs):
 		""" This method overplots the magnetic field lines at the footpoints given by (x0arr[i],y0arr[i]).
 
@@ -901,6 +921,12 @@ class Image(object):
 				QyList.append(self.field_line(Data.b1,Data.b2,Data.x1,Data.x2,Data.dx1,Data.dx1,x0arr[i],y0arr[i]).get('qy'))
 				plot(QxList[i],QyList[i],'k--')
 			axis([min(Data.x1),max(Data.x1),min(Data.x2),max(Data.x2)])
+
+
+
+
+
+
 
         def getSphData(self,Data,w_dir=None,**kwargs):
 	    """This method transforms the vector and scalar  fields from Spherical co-ordinates to Cylindrical.
@@ -1029,47 +1055,3 @@ class Image(object):
 		
 		
 
-
-
-	
-
-
-      
-
-
-
-
-		    
-
-	    
-    
-	    
-	    
-	    
-	    
-	    
-	    
-
-
-
-	
-        
-	  
-
-
-
-
-
-
-    
-         
-    
-
-
-
-
-
-
-
-    
-   
