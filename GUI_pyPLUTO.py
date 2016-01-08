@@ -1,9 +1,10 @@
+#!/usr/bin/env python
 import matplotlib
 matplotlib.use('TkAgg')
 
 
 
-from numpy import arange, sin, pi,log10,max,min,cos,isnan, meshgrid,sqrt
+from numpy import arange, sin, pi,log10,max,min,cos,isnan, meshgrid,sqrt,abs
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg,NavigationToolbar2TkAgg
 from matplotlib.figure import Figure
 import pyPLUTO as pp
@@ -23,9 +24,18 @@ class App:
         frame = Frame(master)
         
         frame.grid(ipadx=10,ipady=10)
+
+        try:
+            sys.argv[1]
+        except:
+            self.datatype = None
+        else:
+            self.datatype = sys.argv[1].split('--')[1]
+            
+        if self.datatype == 'hdf5':
+            print "GUI currently doesnot support pyPLUTO AMR Reader!!"
+            sys.exit()
         
-        
-        self.wdir = os.getcwd() + '/'
         self.I = pp.Image()
         self.Tool = pp.Tools()
         
@@ -43,13 +53,13 @@ class App:
         self.PresentTime = StringVar()
 
         self.myData = self.loaddata()
-        self.varkeys = self.myData.get_varinfo()['allvars']
-        self.grid_dict= self.myData.grid()
+        self.varkeys = self.myData.vars
+        self.wdir = self.myData.wdir
     
 
-        if self.grid_dict["n3"] != 1:
+        if self.myData.n3 != 1:
             self.Geom = '3D'
-        elif self.grid_dict["n3"] == 1 and self.grid_dict["n2"] != 1:
+        elif self.myData.n3 == 1 and self.myData.n2 != 1:
             self.Geom = '2D'
         else:
             self.Geom = '1D'
@@ -97,6 +107,11 @@ class App:
         self.v.set("None")
 
 ################ VARIABLES TO PLOT #################################
+        for i in ['bx1s', 'bx2s', 'bx3s']:
+            try:
+                self.varkeys.remove(i)
+            except ValueError:
+                pass
         
         for j in range(len(self.varkeys)):
             self.ldata = Radiobutton(frame,text=self.varkeys[j],variable=self.v,value=self.varkeys[j],command=self.getmyvar)
@@ -195,11 +210,12 @@ class App:
 
         self.plcont = StringVar()
         self.contkeys = ["None"]
-        if "b1" in self.varkeys:
+        if "bx3" in self.varkeys:
             for item in self.varkeys:
                 self.contkeys.append(item)
-            self.contkeys.append("x1*b3")
-            self.contkeys.append("x1*A3")
+            self.contkeys.append("x1*bx3")
+            if "Ax3" in self.varkeys:
+                self.contkeys.append("x1*Ax3")
         else:
             for item in self.varkeys:
                 self.contkeys.append(item)        
@@ -233,7 +249,7 @@ class App:
         self.arrkeys = ["None"]
         self.arrkeys.append("Vp")
         self.arrkeys.append("Vp_norm")
-        if "b1" in self.varkeys:
+        if "bx1" in self.varkeys:
             self.arrkeys.append("Bp")
             self.arrkeys.append("Bp_norm")
         self.plarr.set("None")
@@ -274,9 +290,9 @@ class App:
         self.lbinf1a = Label(frame,text="Dir :",font=("Times",10,"bold")).grid(row=49,column=0,sticky=W,columnspan=3)
         self.lbinf1 =  Label(frame,text=self.wdir).grid(row=50,column=0,sticky=W,columnspan=3)
         self.lbinf2a = Label(frame,text="Domain :",font=("Times",10,"bold")).grid(row=51,column=0,sticky=W,columnspan=3)
-        self.lbinf2 = Label(frame,text="n1 x n2 x n3 =  %d x %d x %d " % (self.grid_dict.get('n1'),self.grid_dict.get('n2'),self.grid_dict.get('n3'))).grid(row=52,column=0,sticky=W,columnspan=3)
+        self.lbinf2 = Label(frame,text="n1 x n2 x n3 =  %d x %d x %d " % (self.myData.n1,self.myData.n2,self.myData.n3)).grid(row=52,column=0,sticky=W,columnspan=3)
         self.lbinf3a = Label(frame,text="Time Status",font=("Times",10,"bold")).grid(row=53,column=0,sticky=W,columnspan=3)
-        self.lbinf4 = Label(frame,text="Nlast = %d"% (pp.nlast_info().get('nlast'))).grid(row=54,column=0,sticky=W,columnspan=3)
+        self.lbinf4 = Label(frame,text="Nlast = %d"% pp.nlast_info(w_dir=self.wdir,datatype=self.datatype)['nlast']).grid(row=54,column=0,sticky=W,columnspan=3)
         self.lbinf5 = Label(frame,textvariable = self.LoadedNstep).grid(row=55,column=0,sticky=W,columnspan=3)
         self.lbinf6 = Label(frame,textvariable = self.PresentTime).grid(row=56,column=0,sticky=W,columnspan=3)
     
@@ -292,9 +308,9 @@ class App:
             print "Specify the proper value of Nstep"
         else:
             mynstep=int(self.enstep.get())
-            self.D = pp.pload(mynstep,w_dir=self.wdir)
+            self.D = pp.pload(mynstep,datatype=self.datatype)
             self.LoadedNstep.set("Loaded Nstep = "+self.enstep.get())
-            self.PresentTime.set("Present Time = "+str(self.D.time_info()['time'])+" [cu]")
+            self.PresentTime.set("Present Time = "+str(self.D.SimTime) + " [cu]")
             return self.D
 
 
@@ -358,13 +374,9 @@ class App:
         
     
     def plotclear(self):
-        self.a.clear()
-       
-        
-        if len(self.f.axes)>1:
-            self.f.delaxes(self.f.axes[1])
-            self.f.subplots_adjust(right=0.90)
 
+        self.f.clf()
+        self.a = self.f.add_subplot(111)        
         self.canvas.show()
 
     def plotfinal(self):
@@ -440,7 +452,7 @@ class App:
         self.a.set_xlabel(self.xlb.get())
         self.a.set_ylabel(self.ylb.get())
         self.canvas.show()
-        print time.time()-tdum
+        
 
 
     def getvarrange(self):
@@ -527,7 +539,7 @@ class App:
         else:
             if self.slicename == "Along x1":
                 self.x = self.D.x1
-                if self.grid_dict["n3"] == 1:
+                if self.D.n3 == 1:
                     try:
                         int(self.ex2.get().strip().split()[0])
                     except (ValueError, IndexError):
@@ -547,7 +559,7 @@ class App:
             
             elif self.slicename == "Along x2":
                 self.x = self.D.x2
-                if self.grid_dict["n3"] == 1:
+                if self.D.n3 == 1:
                     try:
                         int(self.ex1.get().strip().split()[0])
                     except (ValueError, IndexError):
@@ -588,8 +600,14 @@ class App:
         if self.slicename == "Along x1-x2":
             self.x = self.D.x1
             self.y = self.D.x2
-            if self.grid_dict["n3"] == 1:
-                self.var = self.var[:,:].T
+            xmineed = (abs(self.x-self.getxaxisrange()[0])).argmin()
+            xmaneed = (abs(self.x-self.getxaxisrange()[1])).argmin()
+            ymineed = (abs(self.y-self.getyaxisrange()[0])).argmin()
+            ymaneed = (abs(self.y-self.getyaxisrange()[1])).argmin()
+            self.x = self.x[xmineed:xmaneed]
+            self.y = self.y[ymineed:ymaneed]
+            if self.D.n3 == 1:
+                self.var = self.var[xmineed:xmaneed,ymineed:ymaneed].T
                 self.sucess = True
             else:
                 try:
@@ -597,28 +615,40 @@ class App:
                 except (ValueError, IndexError):
                     print "Specify the value of x3 cut"
                 else:
-                    self.var = self.var[:,:,int(self.ex3.get())].T
+                    self.var = self.var[xmineed:xmaneed,ymineed:ymaneed,int(self.ex3.get())].T
                     self.sucess = True
                 
         elif self.slicename == "Along x2-x3":
             self.x = self.D.x2
             self.y = self.D.x3
+            xmineed = (abs(self.x-self.getxaxisrange()[0])).argmin()
+            xmaneed = (abs(self.x-self.getxaxisrange()[1])).argmin()
+            ymineed = (abs(self.y-self.getyaxisrange()[0])).argmin()
+            ymaneed = (abs(self.y-self.getyaxisrange()[1])).argmin()
+            self.x = self.x[xmineed:xmaneed]
+            self.y = self.y[ymineed:ymaneed]
             try:
                 int(self.ex1.get().strip().split()[0])
             except (ValueError, IndexError):
                 print "Specify the value of x1 cut"
             else:
-                self.var = self.var[int(self.ex1.get()),:,:].T
+                self.var = self.var[int(self.ex1.get()),xmineed:xmaneed,ymineed:ymaneed].T
                 self.sucess = True
         else:
             self.x = self.D.x1
             self.y = self.D.x3
+            xmineed = (abs(self.x-self.getxaxisrange()[0])).argmin()
+            xmaneed = (abs(self.x-self.getxaxisrange()[1])).argmin()
+            ymineed = (abs(self.y-self.getyaxisrange()[0])).argmin()
+            ymaneed = (abs(self.y-self.getyaxisrange()[1])).argmin()
+            self.x = self.x[xmineed:xmaneed]
+            self.y = self.y[ymineed:ymaneed]
             try:
                 int(self.ex2.get().strip().split()[0])
             except (ValueError, IndexError):
                 print "Specify the value of x2 cut"
             else:
-                self.var = self.var[:,int(self.ex2.get()),:].T
+                self.var = self.var[xmineed:xmaneed,int(self.ex2.get()),ymineed:ymaneed].T
                 self.sucess = True
         
         return self.sucess
@@ -626,8 +656,8 @@ class App:
     def drawpolar(self):
         self.sucess = False
         if self.slicename == "Along x1-x2":
-            if self.grid_dict["n3"] == 1:
-                self.R,self.Z,self.SphData = self.I.getSphData(self.D,w_dir=self.wdir, rphi=False)
+            if self.D.n3 == 1:
+                self.R,self.Z,self.SphData = self.I.getSphData(self.D,w_dir=self.wdir,datatype=self.datatype, rphi=False)
                 self.sucess = True
             else:
                 try:
@@ -635,7 +665,7 @@ class App:
                 except (ValueError, IndexError):
                     print "Specify the value of x3 cut"
                 else:
-                    self.R,self.Z,self.SphData = self.I.getSphData(self.D,w_dir=self.wdir, rphi=False,x3cut=int(self.ex3.get()))
+                    self.R,self.Z,self.SphData = self.I.getSphData(self.D,w_dir=self.wdir,datatype=self.datatype, rphi=False,x3cut=int(self.ex3.get()))
                     self.sucess = True
 
         if self.slicename == "Along x3-x1":
@@ -644,7 +674,7 @@ class App:
             except (ValueError, IndexError):
                 print "Specify the value of x2 cut"
             else:
-                self.R,self.Z,self.SphData = self.I.getSphData(self.D,w_dir=self.wdir, rphi=True, x2cut=int(self.ex2.get()))
+                self.R,self.Z,self.SphData = self.I.getSphData(self.D,w_dir=self.wdir,datatype=self.datatype, rphi=True, x2cut=int(self.ex2.get()))
                 self.sucess = True
 
         if self.sucess == True:
@@ -662,7 +692,7 @@ class App:
                 self.minPl=-self.maxPl
             else:
                 self.maxPl=-self.minPl	  
-            if (self.normrange and self.myvar !='rho' and self.myvar !='pr'):
+            if (self.normrange and self.myvar !='rho' and self.myvar !='prs'):
                 self.SphData[self.myvar][-1][-1]=self.maxPl
                 self.SphData[self.myvar][-1][-2]=self.minPl
             if self.logvar.get() == 1:
@@ -677,18 +707,18 @@ class App:
                 self.xcont = self.D.x1
                 self.ycont = self.D.x2
                 self.Xmesh, self.Ymesh = meshgrid(self.D.x1.T,self.D.x2.T)
-                if self.grid_dict["n3"] == 1:
-                    if self.plcont.get() == 'x1*A3':
-			self.varcont = self.Xmesh*(self.D.A3.T)
-                    elif self.plcont.get() == 'x1*b3':
-			self.varcont = self.Xmesh*(self.D.b3.T)
+                if self.D.n3 == 1:
+                    if self.plcont.get() == 'x1*Ax3':
+			self.varcont = self.Xmesh*(self.D.Ax3.T)
+                    elif self.plcont.get() == 'x1*bx3':
+			self.varcont = self.Xmesh*(self.D.bx3.T)
                     else:
                         self.varcont = self.D.__getattribute__(self.plcont.get())[:,:].T              
                 else:
-                    if self.plcont.get() == 'x1*A3':
-			self.varcont = self.Xmesh*(self.D.A3[:,:,int(self.ex3.get())].T)
-                    elif self.plcont.get() == 'x1*b3':
-			self.varcont = self.Xmesh*(self.D.b3[:,:,int(self.ex3.get())].T)
+                    if self.plcont.get() == 'x1*Ax3':
+			self.varcont = self.Xmesh*(self.D.Ax3[:,:,int(self.ex3.get())].T)
+                    elif self.plcont.get() == 'x1*bx3':
+			self.varcont = self.Xmesh*(self.D.bx3[:,:,int(self.ex3.get())].T)
                     else:
                         self.varcont = self.D.__getattribute__(self.plcont.get())[:,:,int(self.ex3.get())].T
                         
@@ -703,10 +733,10 @@ class App:
         else:
             self.xcont = self.R
             self.ycont = self.Z
-            if self.plcont.get() == 'x1*A3':
-                self.varcont = self.R*(self.SphData['A3'])
-            elif self.plcont.get() == 'x1*b3':
-                self.varcont = self.R*(self.SphData['b3'])
+            if self.plcont.get() == 'x1*Ax3':
+                self.varcont = self.R*(self.SphData['Ax3'])
+            elif self.plcont.get() == 'x1*bx3':
+                self.varcont = self.R*(self.SphData['bx3'])
             else:
                 if self.logvar.get() == 1 and self.plcont.get() == self.myvar:
                     self.varcont = 10**(self.SphData[self.plcont.get()])
@@ -720,12 +750,12 @@ class App:
                 self.xcong = self.Tool.congrid(self.Xmesh,2*(int(self.arrspb.get()),),method='linear')
                 self.ycong = self.Tool.congrid(self.Ymesh,2*(int(self.arrspb.get()),),method='linear')
                 if self.plarr.get() == 'Vp' or self.plarr.get() =='Vp_norm':
-                    if self.grid_dict["n3"] == 1:
-                        self.vel1 = self.D.v1[:,:].T
-                        self.vel2 = self.D.v2[:,:].T
+                    if self.D.n3 == 1:
+                        self.vel1 = self.D.vx1[:,:].T
+                        self.vel2 = self.D.vx2[:,:].T
                     else:
-                        self.vel1 = self.D.v1[:,:,int(self.ex3.get())].T
-                        self.vel2 = self.D.v2[:,:,int(self.ex3.get())].T
+                        self.vel1 = self.D.vx1[:,:,int(self.ex3.get())].T
+                        self.vel2 = self.D.vx2[:,:,int(self.ex3.get())].T
                         
                     self.xveccong = self.Tool.congrid(self.vel1,2*(int(self.arrspb.get()),),method='linear')
                     self.yveccong = self.Tool.congrid(self.vel2,2*(int(self.arrspb.get()),),method='linear')
@@ -734,12 +764,12 @@ class App:
                         self.xveccong = self.xveccong/self.normVp
                         self.yveccong = self.yveccong/self.normVp
                 if self.plarr.get() == 'Bp' or self.plarr.get() =='Bp_norm':
-                    if self.grid_dict["n3"] == 1:
-                        self.mag1 = self.D.b1[:,:].T
-                        self.mag2 = self.D.b2[:,:].T
+                    if self.D.n3 == 1:
+                        self.mag1 = self.D.bx1[:,:].T
+                        self.mag2 = self.D.bx2[:,:].T
                     else:
-                        self.mag1 = self.D.b1[:,:,int(self.ex3.get())].T
-                        self.mag2 = self.D.b2[:,:,int(self.ex3.get())].T
+                        self.mag1 = self.D.bx1[:,:,int(self.ex3.get())].T
+                        self.mag2 = self.D.bx2[:,:,int(self.ex3.get())].T
                         
                     self.xveccong = self.Tool.congrid(self.mag1,2*(int(self.arrspb.get()),),method='linear')
                     self.yveccong = self.Tool.congrid(self.mag2,2*(int(self.arrspb.get()),),method='linear')
@@ -753,8 +783,8 @@ class App:
                 self.xcong = self.Tool.congrid(self.Xmesh,2*(int(self.arrspb.get()),),method='linear')
                 self.ycong = self.Tool.congrid(self.Ymesh,2*(int(self.arrspb.get()),),method='linear')
                 if self.plarr.get() == 'Vp' or self.plarr.get() =='Vp_norm':
-                    self.vel1 = self.D.v2[int(self.ex1.get()),:,:].T
-                    self.vel2 = self.D.v3[int(self.ex1.get()),:,:].T
+                    self.vel1 = self.D.vx2[int(self.ex1.get()),:,:].T
+                    self.vel2 = self.D.vx3[int(self.ex1.get()),:,:].T
                     self.xveccong = self.Tool.congrid(self.vel1,2*(int(self.arrspb.get()),),method='linear')
                     self.yveccong = self.Tool.congrid(self.vel2,2*(int(self.arrspb.get()),),method='linear')
                     self.normVp = sqrt(self.xveccong**2 + self.yveccong**2)
@@ -762,8 +792,8 @@ class App:
                         self.xveccong = self.xveccong/self.normVp
                         self.yveccong = self.yveccong/self.normVp
                 if self.plarr.get() == 'Bp' or self.plarr.get() =='Bp_norm':
-                    self.mag1 = self.D.b2[int(self.ex1.get()),:,:].T
-                    self.mag2 = self.D.b3[int(self.ex1.get()),:,:].T
+                    self.mag1 = self.D.bx2[int(self.ex1.get()),:,:].T
+                    self.mag2 = self.D.bx3[int(self.ex1.get()),:,:].T
                     self.xveccong = self.Tool.congrid(self.mag1,2*(int(self.arrspb.get()),),method='linear')
                     self.yveccong = self.Tool.congrid(self.mag2,2*(int(self.arrspb.get()),),method='linear')
                     self.normVp = sqrt(self.xveccong**2 + self.yveccong**2)
@@ -775,8 +805,8 @@ class App:
                 self.xcong = self.Tool.congrid(self.Xmesh,2*(int(self.arrspb.get()),),method='linear')
                 self.ycong = self.Tool.congrid(self.Ymesh,2*(int(self.arrspb.get()),),method='linear')
                 if self.plarr.get() == 'Vp' or self.plarr.get() =='Vp_norm':
-                    self.vel1 = self.D.v1[:,int(self.ex2.get()),:].T
-                    self.vel2 = self.D.v3[:,int(self.ex2.get()),:].T
+                    self.vel1 = self.D.vx1[:,int(self.ex2.get()),:].T
+                    self.vel2 = self.D.vx3[:,int(self.ex2.get()),:].T
                     self.xveccong = self.Tool.congrid(self.vel1,2*(int(self.arrspb.get()),),method='linear')
                     self.yveccong = self.Tool.congrid(self.vel2,2*(int(self.arrspb.get()),),method='linear')
                     self.normVp = sqrt(self.xveccong**2 + self.yveccong**2)
@@ -784,8 +814,8 @@ class App:
                         self.xveccong = self.xveccong/self.normVp
                         self.yveccong = self.yveccong/self.normVp
                 if self.plarr.get() == 'Bp' or self.plarr.get() =='Bp_norm':
-                    self.mag1 = self.D.b1[:,int(self.ex2.get()),:].T
-                    self.mag2 = self.D.b3[:,int(self.ex2.get()),:].T
+                    self.mag1 = self.D.bx1[:,int(self.ex2.get()),:].T
+                    self.mag2 = self.D.bx3[:,int(self.ex2.get()),:].T
                     self.xveccong = self.Tool.congrid(self.mag1,2*(int(self.arrspb.get()),),method='linear')
                     self.yveccong = self.Tool.congrid(self.mag2,2*(int(self.arrspb.get()),),method='linear')
                     self.normVp = sqrt(self.xveccong**2 + self.yveccong**2)
@@ -863,5 +893,4 @@ menubar.add_command(label='Quit',command=root.quit)
 root.config(menu=menubar)
 
 root.mainloop()   
-
 
