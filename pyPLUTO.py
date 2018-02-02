@@ -1044,35 +1044,34 @@ class Tools(object):
         
         if rphi is None or rphi == False:
                     
-                    r0=np.min(np.sin(th)*rx[0])
-                    rN=rx[-1]
-                    dr=rN-r0
-                    z0=np.min(np.cos(th)*rN)
-                    zN=np.max(np.cos(th)*rN)
-                    dz=zN-z0
-                    dth=th[-1]-th[0]
-                    rl=np.int32(len(rx)*dr/(rx[-1]-rx[0]))  
-                    zl=np.int32(rl* dz/dr)
-                    thl=len(th)
-                    r=np.linspace(r0, rN, rl)
-                    z=np.linspace(z0, zN, zl)
+            r0=np.min(np.sin(th)*rx[0])
+            rN=rx[-1]
+            dr=rN-r0
+            z0=np.min(np.cos(th)*rN)
+            zN=np.max(np.cos(th)*rN)
+            dz=zN-z0
+            dth=th[-1]-th[0]
+            rl=np.int32(len(rx)*dr/(rx[-1]-rx[0]))  
+            zl=np.int32(rl* dz/dr)
+            thl=len(th)
+            r=np.linspace(r0, rN, rl)
+            z=np.linspace(z0, zN, zl)
         else:
-                    r0=np.min([np.sin(th)*rx[0] , np.sin(th)*rx[-1]])
-                    rN=np.max([np.sin(th)*rx[0] , np.sin(th)*rx[-1]])
-                    dr=rN-r0
-                    z0=np.min(np.cos(th)*rN)
-                    zN=np.max(np.cos(th)*rN)
-                    dz=zN-z0
-                    dth=th[-1]-th[0]
-                    rl=np.int32(len(rx)*dr/(rx[-1]-rx[0]))  
-                    zl=np.int32(rl* dz/dr)
-                    thl=len(th)
-                    r=np.linspace(r0, rN, rl)
-                    z=np.linspace(z0, zN, zl)
+            r0=np.min([np.sin(th)*rx[0] , np.sin(th)*rx[-1]])
+            rN=np.max([np.sin(th)*rx[0] , np.sin(th)*rx[-1]])
+            dr=rN-r0
+            z0=np.min(np.cos(th)*rN)
+            zN=np.max(np.cos(th)*rN)
+            dz=zN-z0
+            dth=th[-1]-th[0]
+            rl=np.int32(len(rx)*dr/(rx[-1]-rx[0]))  
+            zl=np.int32(rl* dz/dr)
+            thl=len(th)
+            r=np.linspace(r0, rN, rl)
+            z=np.linspace(z0, zN, zl)
                 
-                R,Z = np.meshgrid(r, z)
+        R,Z = np.meshgrid(r, z)
         Rs = np.sqrt(R*R + Z*Z)
-        
         
         Th = np.arccos(Z/Rs)
         kv_34=find(R<0)
@@ -1161,7 +1160,7 @@ class Tools(object):
         
         """
         if not a.dtype in [np.float64, np.float32]:
-        a = np.cast[float](a)
+            a = np.cast[float](a)
 
         m1 = np.cast[int](minusone)
         ofs = np.cast[int](centre) * 0.5
