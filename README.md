@@ -25,3 +25,6 @@ on the surface plot.
 2. The code up-till now only has visualization tools for static data. The AMR data can not be viewed with the same. 
 3. Only compatible with Python 2. Ongoing effort to port it to Python 3 in branch `py3` in this repo.
 
+# TODO
+
+- [ ] Make compatible with Python 3. See branch `py3` in this repo
