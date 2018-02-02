@@ -460,12 +460,12 @@ class pload(object):
             boxes = fl['boxes']
             nbox = len(boxes['lo_i'])
             AMRLevel[i]['nbox'] = nbox
-            ncount = 0L
+            ncount = 0
             AMRLevel[i]['box']=[]
             for j in range(nbox): # loop on all boxes of a given level
-                AMRLevel[i]['box'].append({'x0':0.,'x1':0.,'ib':0L,'ie':0L,\
-                                           'y0':0.,'y1':0.,'jb':0L,'je':0L,\
-                                           'z0':0.,'z1':0.,'kb':0L,'ke':0L})
+                AMRLevel[i]['box'].append({'x0':0.,'x1':0.,'ib':0,'ie':0,\
+                                           'y0':0.,'y1':0.,'jb':0,'je':0,\
+                                           'z0':0.,'z1':0.,'kb':0,'ke':0})
                 # Box indexes
                 ib = boxes[j]['lo_i'] ; ie = boxes[j]['hi_i'] ; nbx = ie-ib+1
                 jb = 0 ; je = 0 ; nby = 1
@@ -548,7 +548,8 @@ class pload(object):
 
     
     def DataScan(self, fp, n1, n2, n3, endian, dtype, off=None):
-    """ Scans the data files in all formats. 
+        """ 
+        Scans the data files in all formats. 
         
         **Inputs**:
           
@@ -564,7 +565,7 @@ class pload(object):
          
           Dictionary consisting of variable names as keys and its values. 
 
-    """
+        """
         if off is not None:
             off_fmt = endian+str(off)+dtype
             nboff = np.dtype(off_fmt).itemsize
@@ -1005,7 +1006,8 @@ class Tools(object):
         return Ri,THi,ZZ
     
         def sph2cyl(self,D,Dx,rphi=None,theta0=None):
-        """ This method transforms spherical data into cylindrical applying interpolation. Works for stretched grid as well, transforms poloidal (R-Theta) data by default. Fix theta and set rphi=True to get (R-Phi) transformation.
+            """ 
+        This method transforms spherical data into cylindrical applying interpolation. Works for stretched grid as well, transforms poloidal (R-Theta) data by default. Fix theta and set rphi=True to get (R-Phi) transformation.
                 
                 **Inputs:**
 
@@ -1028,13 +1030,13 @@ class Tools(object):
           Z - 2D array with cylindrical Z values
           res - 2D array of transformed variable
  
-        """ 
+            """ 
         
         if rphi is None or rphi == False:
             rx=D.x1
             th=D.x2         
         else:
-                    rx=D.x1*np.sin(theta0)
+            rx=D.x1*np.sin(theta0)
             th=D.x3
             
         rx,th,Dx=self.getUniformGrid(rx,th,Dx.T,200,200)
@@ -1229,9 +1231,9 @@ class Tools(object):
         newa = scipy.ndimage.map_coordinates(a, newcoords)
         return newa
         else:
-        print "Congrid error: Unrecognized interpolation type.\n", \
+        print("Congrid error: Unrecognized interpolation type.\n", \
               "Currently only \'neighbour\', \'nearest\',\'linear\',", \
-              "and \'spline\' are supported."
+              "and \'spline\' are supported.")
         return None
 
 
@@ -1538,7 +1540,7 @@ class Image(object):
           ``I.myfieldlines(D,x0arr,y0arr,colors='k',ls='--',lw=1.0)``
         """
            
-        if len(x0arr) != len(y0arr) : print "Input Arrays should have same size"
+        if len(x0arr) != len(y0arr) : print("Input Arrays should have same size")
         QxList=[]
         QyList=[]
         StreamFunction = []
@@ -1599,7 +1601,7 @@ class Image(object):
                     allvars.append('v1c')
                     allvars.append('v3c')
             else:
-                print "No x3 plane for 2D data"
+                print("No x3 plane for 2D data")
         else:
             R,TH = np.meshgrid(Data.x1,Data.x2)
             if Data.n3 != 1:
@@ -1663,7 +1665,7 @@ class Image(object):
         elif ang_coord is D.x3:
             x2r = D.x3r
         else:
-            print "Angular co-ordinate must be given"
+            print("Angular co-ordinate must be given")
             
         rcos = np.outer(np.cos(x2r), D.x1r)
         rsin = np.outer(np.sin(x2r), D.x1r)        
