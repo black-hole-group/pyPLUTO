@@ -88,7 +88,7 @@ def nlast_info(w_dir=None,datatype=None):
     
 
 class pload(object):
-    def __init__(self, ns, w_dir=None, datatype=None, level = 0, x1range=None, x2range=None, x3range=None):
+    def __init__(self, ns, w_dir=None, datatype=None, level = 0, x1range=None, x2range=None, x3range=None, stdout=True):
         """Loads the data.
 	
         **Inputs**:
@@ -138,6 +138,7 @@ class pload(object):
         if w_dir is None:
             w_dir = os.getcwd() + '/'
         self.wdir = w_dir
+        self.stdout=stdout # should we print a message with the filename that was opened?
         
         Data_dictionary = self.ReadDataFile(self.NStepStr)
         for keys in Data_dictionary:
@@ -615,7 +616,8 @@ class pload(object):
         else:
             fp = open(datafilename, "rb")
         
-        print "Reading Data file : %s"%datafilename
+        if self.stdout==True:
+            print "Reading Data file : %s"%datafilename
         
         if self.datatype == 'vtk':
             vtkd = self.DataScanVTK(fp, n1, n2, n3, endian, dtype)
