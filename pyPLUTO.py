@@ -1166,74 +1166,74 @@ class Tools(object):
         ofs = np.cast[int](centre) * 0.5
         old = np.array( a.shape )
         ndims = len( a.shape )
+
         if len( newdims ) != ndims:
-        print("[congrid] dimensions error. " \
-              "This routine currently only support " \
-              "rebinning to the same number of dimensions.")
-        return None
+            print("[congrid] dimensions error. \n This routine currently only support \n rebinning to the same number of dimensions.")    
+            return None
+
         newdims = np.asarray( newdims, dtype=float )
         dimlist = []
 
         if method == 'neighbour':
-        for i in range( ndims ):
-            base = np.indices(newdims)[i]
-            dimlist.append( (old[i] - m1) / (newdims[i] - m1) \
-                    * (base + ofs) - ofs )
-        cd = np.array( dimlist ).round().astype(int)
-        newa = a[list( cd )]
-        return newa
-
+            for i in range( ndims ):
+                base = np.indices(newdims)[i]
+                dimlist.append( (old[i] - m1) / (newdims[i] - m1) * (base + ofs) - ofs )
+            
+            cd = np.array( dimlist ).round().astype(int)
+            newa = a[list( cd )]
+            return newa
         elif method in ['nearest','linear']:
-        # calculate new dims
-        for i in range( ndims ):
-            base = np.arange( newdims[i] )
-            dimlist.append( (old[i] - m1) / (newdims[i] - m1) \
-                    * (base + ofs) - ofs )
-        # specify old dims
-        olddims = [np.arange(i, dtype = np.float) for i in list( a.shape )]
+            # calculate new dims
+            for i in range( ndims ):
+                base = np.arange( newdims[i] )
+                dimlist.append( (old[i] - m1) / (newdims[i] - m1) * (base + ofs) - ofs )
+            
+            # specify old dims
+            olddims = [np.arange(i, dtype = np.float) for i in list( a.shape )]
 
-        # first interpolation - for ndims = any
-        mint = scipy.interpolate.interp1d( olddims[-1], a, kind=method )
-        newa = mint( dimlist[-1] )
+            # first interpolation - for ndims = any
+            mint = scipy.interpolate.interp1d( olddims[-1], a, kind=method )
+            newa = mint( dimlist[-1] )
 
-        trorder = [ndims - 1] + range( ndims - 1 )
-        for i in range( ndims - 2, -1, -1 ):
-            newa = newa.transpose( trorder )
+            trorder = [ndims - 1] + range( ndims - 1 )
+            
+            for i in range( ndims - 2, -1, -1 ):
+                newa = newa.transpose( trorder )
 
-            mint = scipy.interpolate.interp1d( olddims[i], newa, kind=method )
-            newa = mint( dimlist[i] )
+                mint = scipy.interpolate.interp1d( olddims[i], newa, kind=method )
+                newa = mint( dimlist[i] )
 
-        if ndims > 1:
-            # need one more transpose to return to original dimensions
-            newa = newa.transpose( trorder )
+            if ndims > 1:
+                # need one more transpose to return to original dimensions
+                newa = newa.transpose( trorder )
 
-        return newa
+            return newa
         elif method in ['spline']:
-        oslices = [ slice(0,j) for j in old ]
-        oldcoords = np.ogrid[oslices]
-        nslices = [ slice(0,j) for j in list(newdims) ]
-        newcoords = np.mgrid[nslices]
+            oslices = [ slice(0,j) for j in old ]
+            oldcoords = np.ogrid[oslices]
+            nslices = [ slice(0,j) for j in list(newdims) ]
+            newcoords = np.mgrid[nslices]
 
-        newcoords_dims = range(n.rank(newcoords))
-        #make first index last
-        newcoords_dims.append(newcoords_dims.pop(0))
-        newcoords_tr = newcoords.transpose(newcoords_dims)
-        # makes a view that affects newcoords
+            newcoords_dims = range(n.rank(newcoords))
+            #make first index last
+            newcoords_dims.append(newcoords_dims.pop(0))
+            newcoords_tr = newcoords.transpose(newcoords_dims)
+            # makes a view that affects newcoords
 
-        newcoords_tr += ofs
+            newcoords_tr += ofs
 
-        deltas = (np.asarray(old) - m1) / (newdims - m1)
-        newcoords_tr *= deltas
+            deltas = (np.asarray(old) - m1) / (newdims - m1)
+            newcoords_tr *= deltas
 
-        newcoords_tr -= ofs
+            newcoords_tr -= ofs
 
-        newa = scipy.ndimage.map_coordinates(a, newcoords)
-        return newa
+            newa = scipy.ndimage.map_coordinates(a, newcoords)
+            return newa
         else:
-        print("Congrid error: Unrecognized interpolation type.\n", \
-              "Currently only \'neighbour\', \'nearest\',\'linear\',", \
-              "and \'spline\' are supported.")
-        return None
+            print("Congrid error: Unrecognized interpolation type.\n", \
+                  "Currently only \'neighbour\', \'nearest\',\'linear\',", \
+                  "and \'spline\' are supported.")
+            return None
 
 
         
