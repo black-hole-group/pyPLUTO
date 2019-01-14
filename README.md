@@ -17,7 +17,6 @@ Further the GUI is developed with the Tkinter Interface.
 
 1. Only 2D views are available for 3D data. 
 2. The code up-till now only has visualization tools for static data. The AMR data can not be viewed with the same. 
-3. ~~Only compatible with Python 2. Ongoing effort to port it to Python 3 in branch `py3` in this repo.~~
 
 # Authors
 
@@ -26,5 +25,3 @@ Further the GUI is developed with the Tkinter Interface.
 - Rodrigo Nemmen [Universidade de Sao Paulo]. Ported the scripts to Python 3
 
 # TODO
-
-- [x] Make compatible with Python 3
